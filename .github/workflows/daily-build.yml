@@ -86,11 +86,23 @@ jobs:
 
           # 写入Google Services配置
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+          # ---- 本地构建补丁（替代官方 secrets）----
+          # 1) 生成临时签名钥匙
+          keytool -genkeypair -v -keystore app/app.key -alias rikkahublocal -keyalg RSA -keysize 2048 -validity 10000 -storepass rikkahub123 -keypass rikkahub123 -dname "CN=RikkaHub Local Build"
+
+          # 2) 覆盖写入签名配置
+          echo "storeFile=$GITHUB_WORKSPACE/app/app.key" > local.properties
+          echo "storePassword=rikkahub123" >> local.properties
+          echo "keyAlias=rikkahublocal" >> local.properties
+          echo "keyPassword=rikkahub123" >> local.properties
+          
+          # 3) 覆盖写入占位 Google 服务配置
+          printf '%s' '{"project_info":{"project_number":"123456789012","project_id":"rikkahub-local","storage_bucket":"rikkahub-local.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:123456789012:android:1234567890abcdef","android_client_info":{"package_name":"me.rerere.rikkahub"}},"oauth_client":[],"api_key":[{"current_key":"AIzaSyA0000000000000000000000000000000"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}' > app/google-services.json
 
       - name: Gradle Build
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease -x uploadCrashlyticsMappingFileRelease
 
       # 把 APK 直接发布为 Prerelease，用户点链接即可下载单个 apk，无需登录、无需解压
       - name: Publish nightly prerelease
