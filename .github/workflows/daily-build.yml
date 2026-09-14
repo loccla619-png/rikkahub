@@ -88,6 +88,7 @@ jobs:
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
           # ---- 本地构建补丁（替代官方 secrets）----
           # 1) 生成临时签名钥匙
+          rm -f app/app.key
           keytool -genkeypair -v -keystore app/app.key -alias rikkahublocal -keyalg RSA -keysize 2048 -validity 10000 -storepass rikkahub123 -keypass rikkahub123 -dname "CN=RikkaHub Local Build"
 
           # 2) 覆盖写入签名配置
